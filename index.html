@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <title>水舞規則標準房專用卡表</title>
+  <script src="cards.js"></script>
+  <style>
+    body{font-family:"Noto Sans TC",sans-serif;background:#0f1115;color:#e8ebf0;margin:0;padding:20px}
+    h1{text-align:center;margin-bottom:8px}
+    #total{text-align:center;margin-bottom:10px;font-size:18px}
+    #sumWarn{color:#ff6b6b;margin-left:8px}
+    .controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:10px}
+    input{padding:8px;border-radius:8px;border:1px solid #333;background:#171a21;color:#fff}
+    button{padding:8px 12px;border-radius:8px;border:1px solid #333;background:#171a21;color:#fff;cursor:pointer}
+    button.active{background:#b392f0;color:#000}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .panel{background:#171a21;padding:12px;border-radius:10px;min-height:200px}
+    .card{background:#1e2330;padding:10px;margin-bottom:6px;border-radius:10px;display:flex;justify-content:space-between;align-items:center}
+    .blue{color:#5aa6ff}
+  </style>
+</head>
+<body>
+  <h1>水舞規則標準房專用卡表</h1>
+  <div id="total">點數總和：<span id="sum">0</span><span id="sumWarn" style="display:none;">(你的點數超過了)</span></div>
+  <div class="controls">
+    <input id="search" placeholder="搜尋卡名">
+    <button data-tag="魔法">魔法</button>
+    <button data-tag="陷阱">陷阱</button>
+    <button data-tag="怪獸">怪獸</button>
+    <button data-tag="額外怪獸">額外怪獸</button>
+    <button id="reset">重置</button>
+    <button id="removeAll" style="background:#ff6b6b;">移除全部</button>
+  </div>
+  <div class="grid">
+    <div class="panel">
+      <h3>已選擇的卡片</h3>
+      <div id="selectedList"></div>
+    </div>
+    <div class="panel">
+      <h3>全部卡片</h3>
+      <div id="allList"></div>
+    </div>
+  </div>
+
+  <script>
+    const cards = window.cardList.map((c,i)=>({...c,id:`C${i+1}`}));
+    const qty = Object.fromEntries(cards.map(c=>[c.id,0]));
+    let activeTag='', searchText='';
+
+    const sumEl=document.getElementById('sum');
+    const warnEl=document.getElementById('sumWarn');
+    const allList=document.getElementById('allList');
+    const selectedList=document.getElementById('selectedList');
+    const tagBtns=[...document.querySelectorAll('button[data-tag]')];
+
+    const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+    const computeSum=()=>cards.reduce((a,c)=>a+c.points*qty[c.id],0);
+
+    function render(){
+      const total=computeSum();
+      sumEl.textContent=total;
+      warnEl.style.display=total>100?'':'none';
+      renderSelected(); renderAll();
+    }
+
+    function renderSelected(){
+      selectedList.innerHTML='';
+      const picked=cards.filter(c=>qty[c.id]>0);
+      if(!picked.length){selectedList.innerHTML='<div>尚未選擇卡片</div>';return;}
+      for(const c of picked){
+        const div=document.createElement('div');
+        div.className='card';
+        div.innerHTML=`${c.name} (${c.points}) × ${qty[c.id]}`;
+        selectedList.appendChild(div);
+      }
+    }
+
+    function renderAll(){
+      allList.innerHTML='';
+      const list=cards.filter(c=>(!activeTag||c.tag===activeTag)&&(!searchText||c.name.includes(searchText)));
+      for(const c of list){
+        const color=qty[c.id]>=1?'blue':'';
+        const div=document.createElement('div');
+        div.className='card';
+        div.innerHTML=`<span class="${color}">${c.name} (${c.points}) (${c.tag})</span>
+          <span>
+            <button data-op="dec" data-id="${c.id}">－</button>
+            ${qty[c.id]}
+            <button data-op="inc" data-id="${c.id}">＋</button>
+          </span>`;
+        allList.appendChild(div);
+      }
+    }
+
+    document.getElementById('search').oninput=e=>{searchText=e.target.value.trim();render();}
+    tagBtns.forEach(b=>b.onclick=()=>{activeTag=b.dataset.tag;tagBtns.forEach(x=>x.classList.toggle('active',x===b));render();});
+    document.getElementById('reset').onclick=()=>{searchText='';document.getElementById('search').value='';activeTag='';tagBtns.forEach(x=>x.classList.remove('active'));render();}
+    document.getElementById('removeAll').onclick=()=>{for(const k in qty)qty[k]=0;render();}
+    document.addEventListener('click',e=>{
+      const id=e.target.dataset.id,op=e.target.dataset.op;
+      if(!id)return;
+      qty[id]=clamp(qty[id]+(op==='inc'?1:-1),0,3);
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
