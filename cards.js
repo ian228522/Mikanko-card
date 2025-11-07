@@ -1,3 +1,4 @@
+window.cardList = [
 { name: "背反的料理人", points: 101, tag: "怪獸" },
 { name: "星光栗子球", points: 101, tag: "怪獸" },
 { name: "右手鯊", points: 101, tag: "怪獸" },
@@ -48,3 +49,4 @@
 { name: "異次元烏鴉", points: 5, tag: "怪獸" },
 { name: "月女神之剹", points: 5, tag: "魔法" },
 { name: "原始生命態", points: 5, tag: "怪獸" },
+];
